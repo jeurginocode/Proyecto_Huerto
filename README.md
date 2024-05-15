@@ -1,5 +1,5 @@
 # Proyecto_Huerto
-center>
+<center>
 
 **INFORME**
 <br>
