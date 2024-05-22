@@ -96,7 +96,7 @@ _3. Resultados:_
 
 # DISEÑO
 
-¡[DISEÑO DFINIT](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/DISe%C3%91O.jp)
+¡[DISEÑO DFINIT](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/DISe%C3%91O.jpg)
 
 # ALGORITMO
 
