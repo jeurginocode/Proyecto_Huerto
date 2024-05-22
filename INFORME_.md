@@ -96,7 +96,7 @@ _3. Resultados:_
 
 # DISEÑO
 
-¡[DISEÑO DFINIT](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/DISe%C3%91O.jpg)
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/DISe%C3%91O.jpg)
 
 # ALGORITMO
 
@@ -124,7 +124,8 @@ while on:
 	pump off
 
 
-#PSEUDOCDIGO
+# PSEUDOCDIGO
+
 El siguiente psudocodigo es de nuestro codigo ya definitvo:
 
 
@@ -259,9 +260,9 @@ void loop() {
 ```
 
 
-#PROCESO
+# PROCESO
 
-##PASO 1
+## PASO 1
 
 <div align="justify">
 Antes de probar ir código fuente primero probamos los componentes sin usar el Arduino para probar que cada funcionara correctamente.
@@ -287,7 +288,7 @@ IMAGEN DE SENSOR Y ARDUINO
 cómo podemos ver aquí simplemente se conecta el  sensor de nivel de agua en los respectivos pines de Arduino UNO de GND(negativo), VCC(positivo) y SEÑ(señal analógica).
 </div>
 
-##PASO 2
+## PASO 2
 
 <div align="justify">
 En este paso lo que se  hizo fue los códigos de los dos sistemas que son:
@@ -484,5 +485,7 @@ En la funcion`loop()`:
 * Según el nivel de agua (`lectura`), se evalúan diferentes condiciones para controlar el comportamiento de los LEDs (`verdePi`,` amarilloPin`,` rojoPin`) y el buzzer (buzzerPin).
 * `delay(1000);` introduce un retardo de 1 segundo antes de la próxima lectura del sensor.
 
+
+## paso 4
 
 
