@@ -96,7 +96,7 @@ _3. Resultados:_
 
 # DISEÑO
 
-¡[insertando imagen](imagenes/DISeÑO.jpg)
+[¡[insertando imagen](imagenes/DISeÑO.jpg)]
 
 # ALGORITMO
 
