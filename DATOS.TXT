@@ -1,0 +1,22 @@
+Fecha,Hora,Humedad
+Fecha,Hora,Humedad
+2024-05-19, 13:00:02, 0
+2024-05-19, 13:00:05, 0
+Fecha,Hora,Humedad
+Fecha,Hora,Humedad
+Fecha,Hora,Humedad
+Fecha,Hora,Humedad
+2024-05-19, 13:00:02, 0
+2024-05-19, 13:00:05, 0
+2024-05-19, 13:00:07, 0
+2024-05-19, 13:00:10, 1
+2024-05-19, 13:00:12, 1
+Fecha,Hora,Humedad
+Fecha,Hora,Humedad
+Fecha,Hora,Humedad
+Fecha,Hora,Humedad
+2024-05-19, 13:00:02, 1
+2024-05-19, 13:00:05, 0
+2024-05-19, 13:00:07, 1
+2024-05-19, 13:00:10, 0
+2024-05-19, 13:00:12, 1
