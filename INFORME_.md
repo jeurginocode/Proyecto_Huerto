@@ -54,6 +54,7 @@ En una sociedad moderna, mantener huertos domésticos resulta complejo, debido a
 *  Microcontrolador (Arduino UNO)
 *  Tres LEDs Indicadores
 *  Zumbador
+*  ModuloMicroSD
 *  Modulo Reley de un solo canal
 
 **Requerimientos Funcionales:**
@@ -487,5 +488,356 @@ En la funcion`loop()`:
 
 
 ## paso 4
+
+En este paso hacemos el sistema  para guardar los datos en la microSD
+
+INSERTA IMAGEN
+
+###Codigo 
+```
+
+#include <SPI.h>
+#include <SD.h>  
+
+#define SSpin 10 
+
+File archivo;
+
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Inicializando tarjeta ...");
+  if (!SD.begin (SSpin)) {
+    Serial.println("fallo en inicializacion !");
+    return;
+  } 
+  Serial.println("inicializacion correcta"); 
+  archivo = SD.open("prueba.txt", FILE_WRITE);
+  
+  
+  if (archivo) {  
+    archivo.println("Probando 1, 2, 3");
+    Serial.println("Escribiendo en archivo prueba.txt...");
+    archivo.close();
+    Serial.println("escritura correcta");
+  }else {
+    Serial.println("error en apertura de pueba.txt");
+  }
+
+archivo = SD.open("prueba.txt");
+if (archivo) {
+    Serial.println("Contenido de prueba.txt:");
+    while (archivo.available()) {
+        Serial.write(archivo.read()); // de a un caracter por vez hasta finalizar
+    }
+    archivo.close();
+  } else {
+    Serial.println("error en la apertura de prueba.txt");
+  }
+}
+
+void loop() {
+  // put your main code here, to run repeatedluy:
+
+}
+
+
+```
+**Inclusión de Librerías y Definición de Pines y Variables: **
+
+`#include <SPI.h>`: Incluye la librería SPI (Serial Peripheral Interface), que es necesaria para la comunicación entre el Arduino y la tarjeta SD.
+`#include <SD.h>`: Incluye la librería SD, que proporciona funciones para leer y escribir en tarjetas SD.
+`#define SSpin 10`: Define el pin 10 del Arduino como el pin de selección del dispositivo (SS), que se usa para comunicar con la tarjeta SD.
+
+**Declaración de la Variable Archivo**
+
+```
+File archivo;
+
+```
+*` File archivo;`: Declara una variable de tipo File que se usará para manejar el archivo en la tarjeta SD.
+
+**Función `setup()`**
+```
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Inicializando tarjeta ...");
+  if (!SD.begin (SSpin)) {
+    Serial.println("fallo en inicializacion !");
+    return;
+  } 
+  Serial.println("inicializacion correcta");
+
+```
+* `Serial.begin(9600);`: Inicializa la comunicación serial a una velocidad de 9600 baudios.
+* `Serial.println("Inicializando tarjeta ...");`: Imprime un mensaje indicando que se está iniciando la tarjeta SD.
+* `if (!SD.begin(SSpin)) { ... }`: Intenta inicializar la tarjeta SD. Si falla, imprime un mensaje de error y termina la función setup() usando return.
+
+**Abrir y Escribir en un Archivo**
+```
+  archivo = SD.open("prueba.txt", FILE_WRITE);
+  
+  if (archivo) {  
+    archivo.println("Probando 1, 2, 3");
+    Serial.println("Escribiendo en archivo prueba.txt...");
+    archivo.close();
+    Serial.println("escritura correcta");
+  } else {
+    Serial.println("error en apertura de pueba.txt");
+  }
+
+```
+* `archivo = SD.open("prueba.txt", FILE_WRITE);`: Intenta abrir el archivo * 
+ prueba.txt en modo escritura. Si el archivo no existe, lo crea.
+* `if (archivo) { ... } else { ... }`: Verifica si el archivo se abrió correctamente.
+  * Si es así, escribe "Probando 1, 2, 3" en el archivo, imprime mensajes indicando que se está escribiendo y que la escritura fue correcta, y cierra el archivo con` archivo.close()`. 
+  * Si no se pudo abrir el archivo, imprime un mensaje de error.
+**Leer y Mostrar el Contenido del Archivo**
+```
+  archivo = SD.open("prueba.txt");
+  if (archivo) {
+    Serial.println("Contenido de prueba.txt:");
+    while (archivo.available()) {
+      Serial.write(archivo.read()); // de a un caracter por vez hasta finalizar
+    }
+    archivo.close();
+  } else {
+    Serial.println("error en la apertura de prueba.txt");
+  }
+}
+```
+* `archivo = SD.open("prueba.txt");`: Abre el archivo prueba.txt en modo lectura.
+* `if (archivo) { ... } else { ... }`: Verifica si el archivo se abrió correctamente.
+* Si es así, imprime "Contenido de prueba.txt:" y entra en un bucle `while (archivo.available())` para leer el archivo carácter por carácter con `archivo.read()`y escribirlo en el monitor serial con `Serial.write()`. Luego, cierra el archivo.
+* Si no se pudo abrir el archivo, imprime un mensaje de error.
+
+##Paso Final
+
+
+**Codigo**
+Aqui lo que hacemos es juntar los anterires pasos juntandolos en un para poder completar es sistema completo.
+
+El siguiente código toma lecturas de un sensor de humedad y guarda las primeras 20 lecturas junto con la fecha y la hora en una tarjeta SD. Además, controla un relevador, LEDs y un buzzer basándose en los valores leídos de los sensores de humedad y nivel de agua.
+
+```
+#include <TimeLib.h>
+#include <SPI.h>
+#include <SD.h>
+
+int rele = 2;
+int sensorHumedad = A0;
+int lecturaSensor;
+int humedad;
+int setpointHumedadBajo = 30;
+int setpointHumedadAlto = 70;
+const int sensorNivelAguaPin = A1;
+const int verdePin = 3;
+const int amarilloPin = 5;
+const int rojoPin = 6;
+const int buzzerPin = 9;
+
+#define SSpin 10
+File archivo;
+int lecturaCount = 0; // Contador de lecturas
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("LABEL,hora,lectura");
+  
+  pinMode(rele, OUTPUT);
+  digitalWrite(rele, LOW);
+  pinMode(verdePin, OUTPUT);
+  pinMode(amarilloPin, OUTPUT);
+  pinMode(rojoPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+
+  // Inicialización de la tarjeta SD
+  Serial.println("Inicializando tarjeta ...");
+  if (!SD.begin(SSpin)) {
+    Serial.println("fallo en inicializacion !");
+    return;
+  }
+  Serial.println("Inicializacion correcta");
+
+  // Abrir o crear el archivo para guardar datos
+  archivo = SD.open("datos.txt", FILE_WRITE);
+  if (archivo) {
+    archivo.println("Fecha,Hora,Humedad");
+    archivo.close();
+  } else {
+    Serial.println("Error en apertura de datos.txt");
+  }
+
+  setTime(6, 27, 0, 22, 5, 2024); // hr, mm, s, d, m, y
+}
+
+void loop() {
+  reloj();
+  delay(1000);
+
+  if (lecturaCount < 20){ 
+  int lectura = analogRead(sensorNivelAguaPin);
+  lecturaSensor = analogRead(sensorHumedad);
+  humedad = map(lecturaSensor, 0, 1023, 100, 0);
+  Serial.print("Lectura del sensor de humedad de agua: ");
+  Serial.println(humedad);
+
+  if (humedad >= setpointHumedadBajo || digitalRead(rojoPin) == HIGH) {
+    digitalWrite(rele, HIGH);
+  } else {
+    digitalWrite(rele, LOW);
+  }
+  delay(500);
+
+  if (lectura < 600) { // Nivel bajo
+    digitalWrite(verdePin, LOW);
+    digitalWrite(amarilloPin, LOW);
+    digitalWrite(rojoPin, HIGH);
+    tone(buzzerPin, 1000); // Hacer sonar el buzzer
+  } else if (lectura < 660) { // Nivel medio
+    digitalWrite(verdePin, LOW);
+    digitalWrite(amarilloPin, HIGH);
+    digitalWrite(rojoPin, LOW);
+    noTone(buzzerPin); // Detener el sonido del buzzer
+  } else { // Nivel alto
+    digitalWrite(verdePin, HIGH);
+    digitalWrite(amarilloPin, LOW);
+    digitalWrite(rojoPin, LOW);
+    noTone(buzzerPin); // Detener el sonido del buzzer
+  }
+
+  delay(1000); // Espera un segundo antes de la próxima lectura
+  }
+  // Guardar los primeros 10 datos en la SD
+  if (lecturaCount < 20) {
+    guardarDatosEnSD();
+    lecturaCount++;
+  }
+}
+
+void guardarDatosEnSD() {
+  archivo = SD.open("datos.txt", FILE_WRITE);
+  if (archivo) {
+    String tiempo = String(hour()) + ":" + dato(minute()) + ":" + dato(second());
+    String fecha = String(year()) + "-" + dato(month()) + "-" + dato(day());
+    archivo.print(fecha);
+    archivo.print(", ");
+    archivo.print(tiempo);
+    archivo.print(", ");
+    archivo.println(humedad);
+    archivo.close();
+  } else {
+    Serial.println("Error en apertura de datos.txt");
+  }
+}
+
+String dato(int digit) {
+  String dt = String("0") + digit;
+  return dt.substring(dt.length() - 2);
+}
+
+void reloj() {
+  if (lecturaCount < 20) {
+  String tiempo = String(hour()) + ":" + dato(minute()) + ":" + dato(second());
+  Serial.println(tiempo);
+  String fecha = String(year()) + "-" + dato(month()) + "-" + dato(day());
+  Serial.println(fecha);
+  }
+}
+
+```
+
+```
+#include <TimeLib.h>
+#include <SPI.h>
+#include <SD.h>
+
+int rele = 2;
+int sensorHumedad = A0;
+int lecturaSensor;
+int humedad;
+int setpointHumedadBajo = 30;
+int setpointHumedadAlto = 70;
+const int sensorNivelAguaPin = A1;
+const int verdePin = 3;
+const int amarilloPin = 5;
+const int rojoPin = 6;
+const int buzzerPin = 9;
+
+#define SSpin 10
+File archivo;
+int lecturaCount = 0; // Contador de lecturas
+
+```
+**Inclusión de Librerías y Definición de Pines y Variables**
+```
+#include <TimeLib.h>
+#include <SPI.h>
+#include <SD.h>
+
+int rele = 2;
+int sensorHumedad = A0;
+int lecturaSensor;
+int humedad;
+int setpointHumedadBajo = 30;
+int setpointHumedadAlto = 70;
+const int sensorNivelAguaPin = A1;
+const int verdePin = 3;
+const int amarilloPin = 5;
+const int rojoPin = 6;
+const int buzzerPin = 9;
+
+#define SSpin 10
+File archivo;
+int lecturaCount = 0; // Contador de lecturas
+
+```
+
+* Librerías:
+  * `TimeLib.h`: Manejo del tiempo.
+  * SPI.h: Protocolo de comunicación SPI.
+  * SD.h: Manejo de la tarjeta SD.
+* Definición de Pines y Variables:
+  * rele, sensorHumedad, sensorNivelAguaPin, verdePin, amarilloPin, 
+   rojoPin,buzzerPin: Pines a los que están conectados los componentes.
+  * lecturaSensor, humedad, setpointHumedadBajo, setpointHumedadAlto: Variables 
+    para el sensor de humedad.
+  * SSpin: Pin de selección para la tarjeta SD.
+  * archivo: Variable para manejar el archivo en la tarjeta SD.
+  * lecturaCount: Contador para limitar el número de lecturas guardadas.
+
+**Función para Guardar Datos en la SD**
+```
+void guardarDatosEnSD() {
+  archivo = SD.open("datos.txt", FILE_WRITE);
+  if (archivo) {
+    String tiempo = String(hour()) + ":" + dato(minute()) + ":" + dato(second());
+    String fecha = String(year()) + "-" + dato(month()) + "-" + dato(day());
+    archivo.print(fecha);
+    archivo.print(", ");
+    archivo.print(tiempo);
+    archivo.print(", ");
+    archivo.println(humedad);
+    archivo.close();
+  } else {
+    Serial.println("Error en apertura de datos.txt");
+  }
+}
+
+```
+* Abrir y Escribir en el Archivo:
+ * Abre datos.txt en modo escritura.
+ * Escribe la fecha, hora y el valor de humedad.
+ * Cierra el archivo después de escribir.
+
+# PRUEBAS
+Hicimos 5 pruebas las que las desarrollamos en varias horas para haci tener una mayor v
+
+# RESULTADOS
+
+
+# PRESUPUESTO
+
+*nombre*/*costo*
 
 
