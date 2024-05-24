@@ -97,7 +97,7 @@ _3. Resultados:_
 
 # DISEÑO
 
-![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/DISe%C3%91O.jpg)
+![](https://github.com/jeurginocode/royecto-Final-Riego-Automatizado-Grupo-Jourge/blob/main/imagenes/DIse%C3%B1o%20Definitivo.jpg)
 
 # ALGORITMO
 
@@ -371,7 +371,6 @@ void loop() {
 El código era muy sencillo simplemente el Arduino analizaba la señal digital que venía del sensor quera del 0 a 1023,(entre más grande es el valor más alto está el nivel de agua, que 0 no detecta agua y 1023 está en lo más alto)  utilizando la función una digitalanalag() y printl, nos muestra la señal que da nuestro senso
 </div>
 
-IMAGEN DE SENSOR Y ARDUINO
 ![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/nivelagualeds.jpg)
 
 
@@ -943,6 +942,11 @@ Hicimos 5 pruebas las que las desarrollamos en varias horas de dia para haci ten
 ![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/Tabla.png)
 ![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/Tabla2.png)
 ![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/sumadetodo.png)
+
+
+# Esquematico
+![](https://github.com/jeurginocode/royecto-Final-Riego-Automatizado-Grupo-Jourge/blob/main/imagenes/esquematico.png)
+
 
 *nombre*/*costo*
 
