@@ -391,7 +391,6 @@ En este paso lo que se  hizo fue los códigos de los dos sistemas que son:
 ### Primer codigo
 
 
-INSERTA IMAGEN DE DISEÑO
 ![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/sensor%20nivelagua.jpg)
 
 
@@ -466,7 +465,6 @@ void loop() {
 
 ### Segundo Codigo
 
-INSERTA IMAGEN DE DISEÑO GRAFICO
 ![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/nivelagualeds.jpg)
 
 
@@ -586,8 +584,6 @@ En la funcion`loop()`:
 
 
 En este paso hacemos el sistema  para guardar los datos en la microSD
-
-INSERTA IMAGEN
 
 ###Codigo 
 ```
