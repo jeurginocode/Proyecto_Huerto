@@ -112,9 +112,10 @@ _3. Resultados:_
 5. Si nivel   	<=	y ---> indicador de nivel del agua 
 
 6. Si humedad 	<= x (x1, x2, x3, x4)
-
+```
 while on:
 	while h < x:
+ 
 		if nivel > y:
 			if pump on
 			delay i
@@ -123,7 +124,7 @@ while on:
 			sound
 		delay i, record
 	pump off
-
+````
 
 # PSEUDOCDIGO
 
@@ -831,7 +832,9 @@ void guardarDatosEnSD() {
  * Cierra el archivo después de escribir.
 
 # PRUEBAS
-Hicimos 5 pruebas las que las desarrollamos en varias horas para haci tener una mayor v
+Hicimos 5 pruebas las que las desarrollamos en varias horas de dia para haci tener una mayor varieda de resultado:
+
+
 
 # RESULTADOS
 
