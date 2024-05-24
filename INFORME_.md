@@ -201,41 +201,72 @@ End
 El siguiente codigo es el ya definitivo:
 
 ```
+#include <TimeLib.h>
+#include <SPI.h>
+#include <SD.h>
+
 int rele = 2;
 int sensorHumedad = A0;
 int lecturaSensor;
 int humedad;
-int setpointHumedadBajo = 40;
+int setpointHumedadBajo = 30;
 int setpointHumedadAlto = 70;
-const int sensorNivelAguaPin = A1; // Pin analógico al que está conectado el sensor de nivel de agua
-const int verdePin = 3; // Pin al que está conectado el LED verde
-const int amarilloPin = 5; // Pin al que está conectado el LED amarillo
-const int rojoPin = 6; // Pin al que está conectado el LED rojo
-const int buzzerPin = 9; // Pin al que está conectado el buzzer
-       
+const int sensorNivelAguaPin = A1;
+const int verdePin = 3;
+const int amarilloPin = 5;
+const int rojoPin = 6 ;
+const int buzzerPin = 9;
+
+#define SSpin 10
+File archivo;
+int lecturaCount = 0; // Contador de lecturas
+
 void setup() {
+  Serial.begin(9600);
+  Serial.println("LABEL,hora,lectura");
+  
   pinMode(rele, OUTPUT);
   digitalWrite(rele, LOW);
   pinMode(verdePin, OUTPUT);
   pinMode(amarilloPin, OUTPUT);
   pinMode(rojoPin, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
+
+  // Inicialización de la tarjeta SD
+  Serial.println("Inicializando tarjeta ...");
+  if (!SD.begin(SSpin)) {
+    Serial.println("fallo en inicializacion !");
+    return;
+  }
+  Serial.println("Inicializacion correcta");
+
+  // Abrir o crear el archivo para guardar datos
+  archivo = SD.open("datos.txt", FILE_WRITE);
+  if (archivo) {
+    archivo.println("Fecha,Hora,Humedad");
+    archivo.close();
+  } else {
+    Serial.println("Error en apertura de datos.txt");
+  }
+
+  setTime(10, 56, 0, 18, 5, 2024); // hr, mm, s, d, m, y
 }
 
 void loop() {
+  reloj();
+  delay(1000);
+
+  if (lecturaCount < 5){ 
   int lectura = analogRead(sensorNivelAguaPin);
-  Serial.print("Lectura del sensor de nivel de agua: ");
-  Serial.println(lectura);
-  Serial.println(lecturaSensor);
   lecturaSensor = analogRead(sensorHumedad);
   humedad = map(lecturaSensor, 0, 1023, 100, 0);
-  if (humedad > setpointHumedadBajo){
-      digitalWrite(rele, HIGH);
-      if (lectura<600)
-      digitalWrite(rele, LOW);
-  }
-  else if (humedad < setpointHumedadAlto){
-      digitalWrite(rele, LOW);
+  Serial.print("Lectura del sensor de humedad de agua: ");
+  Serial.println(humedad);
+
+  if (humedad >= setpointHumedadBajo || digitalRead(rojoPin) == HIGH) {
+    digitalWrite(rele, HIGH);
+  } else {
+    digitalWrite(rele, LOW);
   }
   delay(500);
 
@@ -244,7 +275,6 @@ void loop() {
     digitalWrite(amarilloPin, LOW);
     digitalWrite(rojoPin, HIGH);
     tone(buzzerPin, 1000); // Hacer sonar el buzzer
-    
   } else if (lectura < 660) { // Nivel medio
     digitalWrite(verdePin, LOW);
     digitalWrite(amarilloPin, HIGH);
@@ -257,8 +287,46 @@ void loop() {
     noTone(buzzerPin); // Detener el sonido del buzzer
   }
 
-  delay(1000); // Espera un segundo antes de la próxima lectura
+  delay(1000); // Espera un segundo antes de la próxima lectura
+  }
+  // Guardar los primeros 10 datos en la SD
+  if (lecturaCount < 5) {
+    guardarDatosEnSD();
+    lecturaCount++;
+  }
 }
+
+void guardarDatosEnSD() {
+  archivo = SD.open("datos.txt", FILE_WRITE);
+  if (archivo) {
+    String tiempo = String(hour()) + ":" + dato(minute()) + ":" + dato(second());
+    String fecha = String(year()) + "-" + dato(month()) + "-" + dato(day());
+    archivo.print(fecha);
+    archivo.print(", ");
+    archivo.print(tiempo);
+    archivo.print(", ");
+    archivo.println(humedad);
+    archivo.close();
+  } else {
+    Serial.println("Error en apertura de datos.txt");
+  }
+}
+
+String dato(int digit) {
+  String dt = String("0") + digit;
+  return dt.substring(dt.length() - 2);
+}
+
+void reloj() {
+  if (lecturaCount < 5) {
+  String tiempo = String(hour()) + ":" + dato(minute()) + ":" + dato(second());
+  Serial.println(tiempo);
+  String fecha = String(year()) + "-" + dato(month()) + "-" + dato(day());
+  Serial.println(fecha);
+  }
+}
+
+
 ```
 
 
@@ -270,7 +338,7 @@ void loop() {
 Antes de probar ir código fuente primero probamos los componentes sin usar el Arduino para probar que cada funcionara correctamente.
 </div>
 
-INSERTA IMAGEN DE DISEÑO
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/probar%20componetes.jpg)
 
 <div align="justify">
 En este Protototypo simplemente era los componentes conectados unos con otros en él, aquí no se intervenía ninguno condigo, su funcionamiento era muy sencillo: lo que hacía es cuando el sensor de humedad no detectaba humedad el motor se encendía pero cuando llegaba un cierta humedad, el módulo diferencial se activaba enviaba una señal que después pero tenía sobrepasar pase una cierta resistencia(Que podía cambiar dependiendo de cuanto ajustaba el tornillo),   lo convertía en un señal analógica,  llegaron, al módulo relé activándolo, para que desactiven la bomba.<br>
@@ -278,13 +346,34 @@ El único componente que no lo pudimos probar si le Arduino fue le sensor de niv
 
 </div>
 
-CODIGO DEL NIVEL DE AGUA
+```
+const int sensorNivelAguaPin = A1; // Pin analógico al que está conectado el sensor de nivel de agua
+const int verdePin = 3; // Pin al que está conectado el LED verde
+const int amarilloPin = 5; // Pin al que está conectado el LED amarillo
+const int rojoPin = 6; // Pin al que está conectado el LED rojo
+const int buzzerPin = 9; // Pin al que está conectado el buzzer
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(verdePin, OUTPUT);
+  pinMode(amarilloPin, OUTPUT);
+  pinMode(rojoPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+}
+
+void loop() {
+  int lectura = analogRead(sensorNivelAguaPin);
+  Serial.print("Lectura del sensor de nivel de agua: ");
+  Serial.println(lectura);
+```
 
 <div align="justify">
 El código era muy sencillo simplemente el Arduino analizaba la señal digital que venía del sensor quera del 0 a 1023,(entre más grande es el valor más alto está el nivel de agua, que 0 no detecta agua y 1023 está en lo más alto)  utilizando la función una digitalanalag() y printl, nos muestra la señal que da nuestro senso
 </div>
 
 IMAGEN DE SENSOR Y ARDUINO
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/nivelagualeds.jpg)
+
 
 <div align="justify">
 cómo podemos ver aquí simplemente se conecta el  sensor de nivel de agua en los respectivos pines de Arduino UNO de GND(negativo), VCC(positivo) y SEÑ(señal analógica).
@@ -304,6 +393,8 @@ En este paso lo que se  hizo fue los códigos de los dos sistemas que son:
 
 
 INSERTA IMAGEN DE DISEÑO
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/sensor%20nivelagua.jpg)
+
 
 <div align="justify">
 La fuente de alimentación se utiliza para proporcionar energía a la bomba, pero como que esta no tiene que estar funcionando las 24 h la conectamos al relé en modo normalmente abierto marcado como NO (del inglés normally open) esto ara que en el estado normal del relé la bomba está parada y solo se pondrá en marcha una vez demos la señal de cambiar de estado del relé. Él cambió de estado del relé lo vamos a controlar con la señal procedente del pin 7 del Arduino. Dicha señal será enviada cuando la humedad del suelo esté por debajo del setpoint que marquemos (que leeremos en el pin A0). Una vez visto el montaje pasemos a ver el código del Arduino.
@@ -377,6 +468,8 @@ void loop() {
 ### Segundo Codigo
 
 INSERTA IMAGEN DE DISEÑO GRAFICO
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/nivelagualeds.jpg)
+
 
 ```
 const int sensorNivelAguaPin = A1; // Pin analógico al que está conectado el sensor de nivel de agua
@@ -489,6 +582,9 @@ En la funcion`loop()`:
 
 
 ## paso 4
+
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/MIcroSD.png)
+
 
 En este paso hacemos el sistema  para guardar los datos en la microSD
 
@@ -613,6 +709,7 @@ void setup() {
 * Si no se pudo abrir el archivo, imprime un mensaje de error.
 
 ##Paso Final
+
 
 
 **Codigo**
@@ -834,12 +931,18 @@ void guardarDatosEnSD() {
 # PRUEBAS
 Hicimos 5 pruebas las que las desarrollamos en varias horas de dia para haci tener una mayor varieda de resultado:
 
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/Captura%20de%20pantalla%202024-05-22%20235544.png)
 
 
 # RESULTADOS
 
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/Captura%20de%20pantalla%202024-05-24%20033155.png)
+
 
 # PRESUPUESTO
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/Tabla.png)
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/Tabla2.png)
+![](https://github.com/jeurginocode/Proyecto_Huerto/blob/main/imagenes/sumadetodo.png)
 
 *nombre*/*costo*
 
