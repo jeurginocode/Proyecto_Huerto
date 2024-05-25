@@ -112,6 +112,9 @@ _3. Resultados:_
 5. Si nivel   	<=	y ---> indicador de nivel del agua 
 
 6. Si humedad 	<= x (x1, x2, x3, x4)
+
+![image](https://github.com/jeurginocode/royecto-Final-Riego-Automatizado-Grupo-Jourge/blob/main/imagenes/Captura%20de%20pantalla%202024-05-25%20123811.png)
+
 ```
 while on:
 	while h < x:
@@ -134,66 +137,127 @@ El siguiente psudocodigo es de nuestro codigo ya definitvo:
 ```
 Start
 
-    Declare Constant rele = 2
-    Declare Constant sensorHumedad = A0
+    Declare Integer rele = 2
+    Declare Integer sensorHumedad = A0
     Declare Integer lecturaSensor
     Declare Integer humedad
-    Declare Constant setpointHumedadBajo = 40
-    Declare Constant setpointHumedadAlto = 70
+    Declare Integer setpointHumedadBajo = 30
+    Declare Integer setpointHumedadAlto = 70
     Constant Integer sensorNivelAguaPin = A1
     Constant Integer verdePin = 3
     Constant Integer amarilloPin = 5
     Constant Integer rojoPin = 6
     Constant Integer buzzerPin = 9
+    Constant Integer SSpin = 10
+    Declare File archivo
+    Declare Integer lecturaCount = 0
 
     Module setup()
+        Call Serial.begin(9600)
+        Call Serial.println("LABEL,hora,lectura")
+        
         Set pinMode(rele, OUTPUT)
         Set digitalWrite(rele, LOW)
         Set pinMode(verdePin, OUTPUT)
         Set pinMode(amarilloPin, OUTPUT)
         Set pinMode(rojoPin, OUTPUT)
         Set pinMode(buzzerPin, OUTPUT)
+
+        Call Serial.println("Inicializando tarjeta ...")
+        If Not SD.begin(SSpin) Then
+            Call Serial.println("fallo en inicializacion !")
+            Return
+        End If
+        Call Serial.println("Inicializacion correcta")
+
+        Set archivo = SD.open("datos.txt", FILE_WRITE)
+        If archivo Then
+            Call archivo.println("Fecha,Hora,Humedad")
+            Call archivo.close()
+        Else
+            Call Serial.println("Error en apertura de datos.txt")
+        End If
+
+        Call setTime(10, 56, 0, 18, 5, 2024)
     End Module
 
     Module loop()
-        Set lectura = analogRead(sensorNivelAguaPin)
-        Display "Lectura del sensor de nivel de agua: " + lectura
-        Display lecturaSensor
-        Set lecturaSensor = analogRead(sensorHumedad)
-        Set humedad = map(lecturaSensor, 0, 1023, 100, 0)
-        
-        If humedad > setpointHumedadBajo Then
-            Set digitalWrite(rele, HIGH)
-            If lectura < 600 Then
+        Call reloj()
+        Delay(1000)
+
+        If lecturaCount < 5 Then
+            Declare Integer lectura
+            Set lectura = analogRead(sensorNivelAguaPin)
+            Set lecturaSensor = analogRead(sensorHumedad)
+            Set humedad = map(lecturaSensor, 0, 1023, 100, 0)
+            Call Serial.print("Lectura del sensor de humedad de agua: ")
+            Call Serial.println(humedad)
+
+            If humedad >= setpointHumedadBajo Or digitalRead(rojoPin) == HIGH Then
+                Set digitalWrite(rele, HIGH)
+            Else
                 Set digitalWrite(rele, LOW)
             End If
-        Else If humedad < setpointHumedadAlto Then
-            Set digitalWrite(rele, LOW)
+            Delay(500)
+
+            If lectura < 600 Then
+                Set digitalWrite(verdePin, LOW)
+                Set digitalWrite(amarilloPin, LOW)
+                Set digitalWrite(rojoPin, HIGH)
+                Call tone(buzzerPin, 1000)
+            Else If lectura < 660 Then
+                Set digitalWrite(verdePin, LOW)
+                Set digitalWrite(amarilloPin, HIGH)
+                Set digitalWrite(rojoPin, LOW)
+                Call noTone(buzzerPin)
+            Else
+                Set digitalWrite(verdePin, HIGH)
+                Set digitalWrite(amarilloPin, LOW)
+                Set digitalWrite(rojoPin, LOW)
+                Call noTone(buzzerPin)
+            End If
+
+            Delay(1000)
         End If
 
-        Delay(500)
+        If lecturaCount < 5 Then
+            Call guardarDatosEnSD()
+            Set lecturaCount = lecturaCount + 1
+        End If
+    End Module
 
-        If lectura < 600 Then
-            Set digitalWrite(verdePin, LOW)
-            Set digitalWrite(amarilloPin, LOW)
-            Set digitalWrite(rojoPin, HIGH)
-            Set tone(buzzerPin, 1000)
-        Else If lectura < 660 Then
-            Set digitalWrite(verdePin, LOW)
-            Set digitalWrite(amarilloPin, HIGH)
-            Set digitalWrite(rojoPin, LOW)
-            Set noTone(buzzerPin)
+    Module guardarDatosEnSD()
+        Set archivo = SD.open("datos.txt", FILE_WRITE)
+        If archivo Then
+            Declare String tiempo = String(hour()) + ":" + dato(minute()) + ":" + dato(second())
+            Declare String fecha = String(year()) + "-" + dato(month()) + "-" + dato(day())
+            Call archivo.print(fecha)
+            Call archivo.print(", ")
+            Call archivo.print(tiempo)
+            Call archivo.print(", ")
+            Call archivo.println(humedad)
+            Call archivo.close()
         Else
-            Set digitalWrite(verdePin, HIGH)
-            Set digitalWrite(amarilloPin, LOW)
-            Set digitalWrite(rojoPin, LOW)
-            Set noTone(buzzerPin)
+            Call Serial.println("Error en apertura de datos.txt")
         End If
+    End Module
 
-        Delay(1000)
+    Function String dato(Integer digit)
+        Declare String dt = String("0") + digit
+        Return dt.substring(dt.length() - 2)
+    End Function
+
+    Module reloj()
+        If lecturaCount < 5 Then
+            Declare String tiempo = String(hour()) + ":" + dato(minute()) + ":" + dato(second())
+            Call Serial.println(tiempo)
+            Declare String fecha = String(year()) + "-" + dato(month()) + "-" + dato(day())
+            Call Serial.println(fecha)
+        End If
     End Module
 
 End
+
 ```
 
 
